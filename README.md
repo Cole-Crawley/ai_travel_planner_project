@@ -121,6 +121,7 @@ public/                              # Static assets
 ---
 
 The structured prompt writing method requires users to define real-world limitations, which must be applied throughout their interactive systems. The development of resilient AI pipelines enables systems to manage rate limits and truncation and malformed output without displaying errors to their users. The performance of map markers depends on the comparison between React state updates and direct DOM mutation. The route displays how mapping libraries use coordinate systems while demonstrating safe methods to standardize AI-created geographic information.
+
 ---
 
 *Built with Next.js, Groq, and MapLibre GL.*
