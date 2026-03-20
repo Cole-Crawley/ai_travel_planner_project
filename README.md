@@ -118,6 +118,16 @@ types/
 └── index.ts                         # Shared TypeScript types (Activity, TripItinerary, SavedTrip)
 public/                              # Static assets
 ```
+
+---
+StoryBook (Testing components without the loading)
+<img width="1117" height="1120" alt="image" src="https://github.com/user-attachments/assets/8a437032-f3f0-4b09-bf25-f1851a77a43a" />
+<img width="1073" height="1027" alt="image" src="https://github.com/user-attachments/assets/15bce140-c729-4a9f-ad8b-9fb1f06beab3" />
+<img width="1092" height="747" alt="image" src="https://github.com/user-attachments/assets/8da44572-5aaa-4934-9e26-f08f3d84dcbf" />
+<img width="1087" height="1269" alt="image" src="https://github.com/user-attachments/assets/b5112f96-64b8-4762-a46f-35029a6cb0cf" />
+---
+
+
 ---
 
 The structured prompt writing method requires users to define real-world limitations, which must be applied throughout their interactive systems. The development of resilient AI pipelines enables systems to manage rate limits and truncation and malformed output without displaying errors to their users. The performance of map markers depends on the comparison between React state updates and direct DOM mutation. The route displays how mapping libraries use coordinate systems while demonstrating safe methods to standardize AI-created geographic information.
