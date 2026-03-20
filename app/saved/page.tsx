@@ -46,13 +46,13 @@ export default function SavedPage() {
 
       {/* Header */}
       <div style={{ padding: '32px 48px 0', maxWidth: '900px', margin: '0 auto' }}>
-        <Link href="/" style={{ fontSize: '13px', color: '#E8573A', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '40px', opacity: 0.9 }}>
+        <Link href="/" style={{ fontSize: '13px', color: '#BF4528', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '40px', opacity: 0.9 }}>
           ← Back
         </Link>
 
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '48px', flexWrap: 'wrap', gap: '16px' }}>
           <div>
-            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', color: '#B0A090', textTransform: 'uppercase', marginBottom: '8px' }}>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', color: '#6B5C52', textTransform: 'uppercase', marginBottom: '8px' }}>
               Your collection
             </p>
             <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '52px', fontWeight: 900, lineHeight: 1, letterSpacing: '-0.02em', margin: 0 }}>
@@ -61,8 +61,8 @@ export default function SavedPage() {
           </div>
           {trips.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '100px', padding: '10px 20px' }}>
-              <span style={{ fontSize: '22px', fontWeight: 900, color: '#E8573A', fontFamily: 'var(--font-playfair), serif', lineHeight: 1 }}>{trips.length}</span>
-              <span style={{ fontSize: '13px', color: '#8C7B6E' }}>{trips.length === 1 ? 'itinerary saved' : 'itineraries saved'}</span>
+              <span style={{ fontSize: '22px', fontWeight: 900, color: '#BF4528', fontFamily: 'var(--font-playfair), serif', lineHeight: 1 }}>{trips.length}</span>
+              <span style={{ fontSize: '13px', color: '#6B5C52' }}>{trips.length === 1 ? 'itinerary saved' : 'itineraries saved'}</span>
             </div>
           )}
         </div>
@@ -82,7 +82,7 @@ export default function SavedPage() {
             <p style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '24px', fontWeight: 700, marginBottom: '10px', color: '#1C1917' }}>
               No trips yet
             </p>
-            <p style={{ fontSize: '14px', color: '#A09080', marginBottom: '32px', maxWidth: '280px', margin: '0 auto 32px', lineHeight: 1.6 }}>
+            <p style={{ fontSize: '14px', color: '#6B5C52', marginBottom: '32px', maxWidth: '280px', margin: '0 auto 32px', lineHeight: 1.6 }}>
               Plan your first itinerary and it will appear here
             </p>
             <Link
@@ -136,11 +136,11 @@ export default function SavedPage() {
                             {trip.destination}
                           </h2>
                           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                            <span style={{ fontSize: '12px', color: '#A09080' }}>Saved {trip.savedAt}</span>
+                            <span style={{ fontSize: '12px', color: '#6B5C52' }}>Saved {trip.savedAt}</span>
                             <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#D0C8C0' }} />
-                            <span style={{ fontSize: '12px', color: '#A09080' }}>{trip.itinerary.duration} days</span>
+                            <span style={{ fontSize: '12px', color: '#6B5C52' }}>{trip.itinerary.duration} days</span>
                             <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#D0C8C0' }} />
-                            <span style={{ fontSize: '12px', color: '#A09080' }}>{totalActivities} activities</span>
+                            <span style={{ fontSize: '12px', color: '#6B5C52' }}>{totalActivities} activities</span>
                           </div>
                         </div>
 
@@ -150,7 +150,7 @@ export default function SavedPage() {
                             background: 'none',
                             border: '1px solid rgba(0,0,0,0.08)',
                             borderRadius: '100px',
-                            color: '#A09080',
+                            color: '#6B5C52',
                             fontSize: '12px',
                             cursor: 'pointer',
                             padding: '6px 14px',
@@ -207,7 +207,7 @@ export default function SavedPage() {
                                     {day.activities.map((a, ai) => (
                                       <span key={ai} style={{
                                         fontSize: '11px',
-                                        color: '#8C7B6E',
+                                        color: '#6B5C52',
                                         background: '#F5F0EB',
                                         padding: '2px 9px',
                                         borderRadius: '100px',
@@ -233,7 +233,7 @@ export default function SavedPage() {
                                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#D0C8C0' }} />
                               </div>
                               <div style={{ paddingTop: '10px' }}>
-                                <span style={{ fontSize: '12px', color: '#A09080', fontStyle: 'italic' }}>
+                                <span style={{ fontSize: '12px', color: '#6B5C52', fontStyle: 'italic' }}>
                                   + {trip.itinerary.days.length - 4} more days
                                 </span>
                               </div>
@@ -262,7 +262,7 @@ export default function SavedPage() {
                         >
                           View & edit →
                         </Link>
-                        <span style={{ fontSize: '12px', color: '#B0A090' }}>Opens the full itinerary</span>
+                        <span style={{ fontSize: '12px', color: '#6B5C52' }}>Opens the full itinerary</span>
                       </div>
                     </div>
                   </motion.div>

@@ -1,13 +1,15 @@
 'use client';
 
-import ActivityCard from '@/components/ActivityCard';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { TripItinerary, Activity, SavedTrip } from '@/types';
 
+import ActivityCard from '@/components/ActivityCard';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// MapLibre GL is only imported client-side — it references browser APIs
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 
 /** MapLibre expects [lng, lat]. AI often returns [lat, lng]. Detect and fix. */
@@ -17,34 +19,34 @@ function normalizeLngLat(coords: [number, number]): [number, number] {
   return [a, b];
 }
 
-export default function TripPage() {
+/** Guard against malformed saved/API data — ensure every day has an activities array. */
+function sanitiseItinerary(data: TripItinerary): TripItinerary {
+  return {
+    ...data,
+    days: (data.days ?? []).map(day => ({
+      ...day,
+      activities: Array.isArray(day.activities) ? day.activities : [],
+    })),
+  };
+}
+
+function TripPageInner() {
   const searchParams = useSearchParams();
   const destination  = searchParams.get('destination') || '';
   const savedId      = searchParams.get('saved') || '';
 
-  const [itinerary,            setItinerary]            = useState<TripItinerary | null>(null);
-  const [loading,              setLoading]              = useState(true);
-  const [error,                setError]                = useState('');
-  const [activeDay,            setActiveDay]            = useState(0);
-  const [alternatives,         setAlternatives]         = useState<string[]>([]);
-  const [activityAlts,         setActivityAlts]         = useState<Activity[]>([]);
-  const [loadingActAlts,       setLoadingActAlts]       = useState(false);
+  const [itinerary,             setItinerary]            = useState<TripItinerary | null>(null);
+  const [loading,               setLoading]              = useState(true);
+  const [error,                 setError]                = useState('');
+  const [activeDay,             setActiveDay]            = useState(0);
+  const [alternatives,          setAlternatives]         = useState<string[]>([]);
+  const [activityAlts,          setActivityAlts]         = useState<Activity[]>([]);
+  const [loadingActAlts,        setLoadingActAlts]       = useState(false);
   const [selectedActivityIndex, setSelectedActivityIndex] = useState<{ dayIndex: number; actIndex: number } | null>(null);
-  const [saved,                setSaved]                = useState(false);
-  const [showSaveToast,        setShowSaveToast]        = useState(false);
-
-  /**
-   * hoveredActivity — the last card the mouse entered.
-   * It sticks until the mouse enters a DIFFERENT card (not cleared on mouseleave).
-   * Cleared when the alt panel closes or a swap is committed.
-   */
-  const [hoveredActivity, setHoveredActivity] = useState<Activity | null>(null);
-
-  /**
-   * previewedAlt — which alternative card in the swap panel is currently hovered.
-   * Drives the teal node highlight + flyTo on the map.
-   */
-  const [previewedAlt, setPreviewedAlt] = useState<Activity | null>(null);
+  const [saved,                 setSaved]                = useState(false);
+  const [showSaveToast,         setShowSaveToast]        = useState(false);
+  const [hoveredActivity,       setHoveredActivity]      = useState<Activity | null>(null);
+  const [previewedAlt,          setPreviewedAlt]         = useState<Activity | null>(null);
 
   // ── Data fetching ───────────────────────────────────────────────────────────
   useEffect(() => {
@@ -56,9 +58,10 @@ export default function TripPage() {
         const stored: SavedTrip[] = JSON.parse(localStorage.getItem('savedTrips') || '[]');
         const match = stored.find(t => t.id === savedId);
         if (match) {
-          setItinerary(match.itinerary);
-          setSaved(true); // already saved — show the checkmark state
-          fetchAlternatives(match.itinerary.destination);
+          const normalised = sanitiseItinerary(match.itinerary);
+          setItinerary(normalised);
+          setSaved(true);
+          fetchAlternatives(normalised.destination);
           setLoading(false);
           return;
         }
@@ -68,16 +71,15 @@ export default function TripPage() {
     }
 
     // ── Fresh generation: parse freeform input then call API ──────────────────
-    // e.g. "Bora Bora beach type with food and 14 days" → dest, days, prefs
-    const daysMatch  = destination.match(/\b(\d+)\s*days?\b/i);
-    const tripDays   = daysMatch ? Math.min(parseInt(daysMatch[1], 10), 14) : 5;
-    const cleanDest  = destination
+    const daysMatch = destination.match(/\b(\d+)\s*days?\b/i);
+    const tripDays  = daysMatch ? Math.min(parseInt(daysMatch[1], 10), 14) : 5;
+    const cleanDest = destination
       .replace(/\b\d+\s*days?\b/gi, '')
       .replace(/\b(beach|food|culture|nature|adventure|relaxation|shopping|city|with|type|and|for)\b/gi, '')
       .replace(/\s+/g, ' ')
       .trim() || destination;
-    const prefWords  = destination.match(/\b(beach|food|culture|nature|adventure|relaxation|shopping|city)\b/gi);
-    const prefs      = prefWords ? prefWords.join(', ') : '';
+    const prefWords = destination.match(/\b(beach|food|culture|nature|adventure|relaxation|shopping|city)\b/gi);
+    const prefs     = prefWords ? prefWords.join(', ') : '';
 
     const fetchItinerary = async () => {
       try {
@@ -91,8 +93,9 @@ export default function TripPage() {
           setError(data.message || 'Something went wrong. Please try again.');
           return;
         }
-        setItinerary(data);
-        fetchAlternatives(data.destination || cleanDest);
+        const normalised = sanitiseItinerary(data as TripItinerary);
+        setItinerary(normalised);
+        fetchAlternatives(normalised.destination || cleanDest);
       } catch {
         setError('Something went wrong. Please try again.');
       } finally {
@@ -120,7 +123,6 @@ export default function TripPage() {
     dayIndex: number,
     actIndex: number,
   ) => {
-    // Toggle off if same card clicked again
     if (selectedActivityIndex?.dayIndex === dayIndex && selectedActivityIndex?.actIndex === actIndex) {
       setSelectedActivityIndex(null);
       setActivityAlts([]);
@@ -128,7 +130,7 @@ export default function TripPage() {
       return;
     }
     setSelectedActivityIndex({ dayIndex, actIndex });
-    setHoveredActivity(activity); // pin this card on the map when panel opens
+    setHoveredActivity(activity);
     setPreviewedAlt(null);
     setLoadingActAlts(true);
     try {
@@ -147,7 +149,6 @@ export default function TripPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        // Show a single placeholder card with the error message
         setActivityAlts([]);
         console.warn('[alternatives]', data.message || 'rate limited');
         return;
@@ -157,39 +158,31 @@ export default function TripPage() {
     finally { setLoadingActAlts(false); }
   };
 
-  /**
-   * Swap committed: replace the activity in the itinerary, clear alt state.
-   * The marker rebuild in MapView will naturally convert the position to a
-   * main (coral) node because it's now in the `activities` array.
-   */
   const replaceActivity = (dayIndex: number, actIndex: number, newActivity: Activity) => {
     if (!itinerary) return;
     const updated = { ...itinerary };
     updated.days  = updated.days.map((day, di) => {
       if (di !== dayIndex) return day;
-      const newActivities      = [...day.activities];
-      newActivities[actIndex]  = { ...newActivity, time: day.activities[actIndex].time };
+      const newActivities     = [...day.activities];
+      newActivities[actIndex] = { ...newActivity, time: day.activities[actIndex].time };
       return { ...day, activities: newActivities };
     });
     setItinerary(updated);
     setSelectedActivityIndex(null);
     setActivityAlts([]);
     setPreviewedAlt(null);
-    setHoveredActivity(newActivity); // keep the swapped-in activity highlighted
+    setHoveredActivity(newActivity);
   };
 
   const saveItinerary = () => {
     if (!itinerary) return;
     const existing: SavedTrip[] = JSON.parse(localStorage.getItem('savedTrips') || '[]');
-
     if (savedId) {
-      // Viewing an existing saved trip — update it in place rather than duplicating
       const updated = existing.map(t =>
         t.id === savedId ? { ...t, itinerary, savedAt: new Date().toLocaleDateString() } : t
       );
       localStorage.setItem('savedTrips', JSON.stringify(updated));
     } else {
-      // Fresh trip — prepend as new entry
       const newTrip: SavedTrip = {
         id: Date.now().toString(),
         destination: itinerary.destination,
@@ -198,7 +191,6 @@ export default function TripPage() {
       };
       localStorage.setItem('savedTrips', JSON.stringify([newTrip, ...existing]));
     }
-
     setSaved(true);
     setShowSaveToast(true);
     setTimeout(() => setShowSaveToast(false), 3000);
@@ -207,28 +199,32 @@ export default function TripPage() {
   // ── Loading / error states ─────────────────────────────────────────────────
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#F5F0E8', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
-      <div style={{ width: '32px', height: '32px', border: '2px solid #E8573A', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-      <p style={{ color: '#8C7B6E', fontSize: '14px' }}>Planning your trip to {destination}...</p>
+      <div style={{
+        width: '32px', height: '32px', borderRadius: '50%',
+        border: '2.5px solid rgba(232,87,58,0.2)',
+        borderTopColor: '#E8573A',
+        animation: 'spin 0.75s linear infinite',
+        willChange: 'transform',
+      }} />
+      <p style={{ color: '#6B5C52', fontSize: '14px' }}>Planning your trip to {destination}...</p>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 
   if (error) return (
     <div style={{ minHeight: '100vh', background: '#F5F0E8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ color: '#E8573A', fontSize: '14px' }}>{error}</p>
+      <p style={{ color: '#BF4528', fontSize: '14px' }}>{error}</p>
     </div>
   );
 
   // ── Derived values ─────────────────────────────────────────────────────────
-  const allActivities: Activity[] = itinerary?.days.flatMap(d => d.activities ?? []) || [];
-  const displayedActivities          = activeDay === 0
+  const allActivities: Activity[]   = itinerary?.days.flatMap(d => d.activities ?? []) || [];
+  const displayedActivities         = activeDay === 0
     ? allActivities
-    : (itinerary?.days.find(d => d.day === activeDay)?.activities || []);
-  const rawCenter                    = allActivities[0]?.coordinates ?? [0, 0];
-  const mapCenter: [number, number]  = normalizeLngLat(rawCenter as [number, number]);
-
-  // Only show alt markers while the swap panel is open
-  const visibleAlts = selectedActivityIndex ? activityAlts : [];
+    : (itinerary?.days.find(d => d.day === activeDay)?.activities ?? []);
+  const rawCenter                   = allActivities[0]?.coordinates ?? [0, 0];
+  const mapCenter: [number, number] = normalizeLngLat(rawCenter as [number, number]);
+  const visibleAlts                 = selectedActivityIndex ? activityAlts : [];
 
   return (
     <main style={{ minHeight: '100vh', background: '#F5F0E8', color: '#1C1917' }}>
@@ -250,14 +246,14 @@ export default function TripPage() {
       {/* Header */}
       <div style={{ padding: '20px 40px', borderBottom: '1px solid rgba(0,0,0,0.08)', background: '#F5F0E8', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-          <Link href="/" style={{ fontSize: '13px', color: '#E8573A', textDecoration: 'none' }}>← Back</Link>
+          <Link href="/" style={{ fontSize: '13px', color: '#BF4528', textDecoration: 'none' }}>← Back</Link>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <Link href="/saved" style={{ fontSize: '13px', color: '#8C7B6E', textDecoration: 'none', background: 'white', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '8px 16px' }}>
+            <Link href="/saved" style={{ fontSize: '13px', color: '#6B5C52', textDecoration: 'none', background: 'white', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '8px 16px' }}>
               My trips
             </Link>
             <button
               onClick={saveItinerary}
-              style={{ fontSize: '13px', fontWeight: 500, color: saved ? '#8C7B6E' : 'white', background: saved ? 'white' : '#E8573A', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '8px 20px', cursor: 'pointer' }}
+              style={{ fontSize: '13px', fontWeight: 500, color: saved ? '#6B5C52' : 'white', background: saved ? 'white' : '#E8573A', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '8px 20px', cursor: 'pointer' }}
             >
               {saved ? '✓ Saved' : 'Save trip'}
             </button>
@@ -269,15 +265,15 @@ export default function TripPage() {
             <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '32px', fontWeight: 900, lineHeight: 1.1, marginBottom: '4px' }}>
               {itinerary?.destination}
             </h1>
-            <p style={{ fontSize: '13px', color: '#8C7B6E' }}>
+            <p style={{ fontSize: '13px', color: '#6B5C52' }}>
               {itinerary?.duration} day itinerary ·{' '}
-              <span style={{ color: '#E8573A' }}>Click an activity to swap it</span>
+              <span style={{ color: '#BF4528' }}>Click an activity to swap it</span>
             </p>
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button
               onClick={() => setActiveDay(0)}
-              style={{ background: activeDay === 0 ? '#1C1917' : 'white', color: activeDay === 0 ? 'white' : '#8C7B6E', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
+              style={{ background: activeDay === 0 ? '#1C1917' : 'white', color: activeDay === 0 ? 'white' : '#6B5C52', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
             >
               All
             </button>
@@ -285,7 +281,7 @@ export default function TripPage() {
               <button
                 key={day.day}
                 onClick={() => setActiveDay(day.day)}
-                style={{ background: activeDay === day.day ? '#1C1917' : 'white', color: activeDay === day.day ? 'white' : '#8C7B6E', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
+                style={{ background: activeDay === day.day ? '#1C1917' : 'white', color: activeDay === day.day ? 'white' : '#6B5C52', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
               >
                 Day {day.day}
               </button>
@@ -320,7 +316,7 @@ export default function TripPage() {
 
                   <div style={{ background: 'white', borderRadius: '20px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
                     {(day.activities ?? []).map((activity, actIndex) => {
-                      const isSelected   = selectedActivityIndex?.dayIndex === realDayIndex && selectedActivityIndex?.actIndex === actIndex;
+                      const isSelected    = selectedActivityIndex?.dayIndex === realDayIndex && selectedActivityIndex?.actIndex === actIndex;
                       const isHighlighted = hoveredActivity?.title === activity.title;
 
                       return (
@@ -331,7 +327,6 @@ export default function TripPage() {
                             isSelected={isSelected}
                             isHighlighted={isHighlighted}
                             onCardClick={() => fetchActivityAlternatives(activity, day.theme, realDayIndex, actIndex)}
-                            // Sticky hover: only set on enter, never clear on leave
                             onMouseEnter={() => setHoveredActivity(activity)}
                           />
 
@@ -346,9 +341,8 @@ export default function TripPage() {
                                 style={{ overflow: 'hidden', background: '#FFF5F2', borderBottom: '1px solid rgba(0,0,0,0.05)' }}
                               >
                                 <div style={{ padding: '12px 20px 16px' }}>
-                                  {/* Legend */}
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
-                                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#8C7B6E', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#6B5C52', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                                       Swap with an alternative
                                     </p>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: '#0D9488' }}>
@@ -365,8 +359,8 @@ export default function TripPage() {
                                     </div>
                                   ) : activityAlts.length === 0 ? (
                                     <div style={{ padding: '16px', background: 'rgba(232,87,58,0.06)', borderRadius: '12px', border: '1px solid rgba(232,87,58,0.12)' }}>
-                                      <p style={{ fontSize: '12px', color: '#8C7B6E', margin: 0, lineHeight: 1.5 }}>
-                                        ⏱ We've hit the AI usage limit. Please try again in a few minutes.
+                                      <p style={{ fontSize: '12px', color: '#6B5C52', margin: 0, lineHeight: 1.5 }}>
+                                        ⏱ We have hit the AI usage limit. Please try again in a few minutes.
                                       </p>
                                     </div>
                                   ) : (
@@ -379,7 +373,6 @@ export default function TripPage() {
                                           isSelected={false}
                                           isHighlighted={previewedAlt?.title === alt.title}
                                           onCardClick={() => replaceActivity(realDayIndex, actIndex, alt)}
-                                          // Hovering an alt previews its teal node + flies to it
                                           onMouseEnter={() => setPreviewedAlt(alt)}
                                           onMouseLeave={() => setPreviewedAlt(null)}
                                           showSwapButton
@@ -403,7 +396,7 @@ export default function TripPage() {
           {/* Destination alternatives */}
           {alternatives.length > 0 && (
             <div style={{ marginTop: '40px', paddingTop: '32px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-              <p style={{ fontSize: '11px', fontWeight: 500, letterSpacing: '0.1em', color: '#8C7B6E', textTransform: 'uppercase', marginBottom: '16px' }}>
+              <p style={{ fontSize: '11px', fontWeight: 500, letterSpacing: '0.1em', color: '#6B5C52', textTransform: 'uppercase', marginBottom: '16px' }}>
                 You might also like
               </p>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -435,5 +428,19 @@ export default function TripPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function TripPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', background: '#F5F0E8', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+        <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2.5px solid rgba(232,87,58,0.2)', borderTopColor: '#E8573A', animation: 'spin 0.75s linear infinite', willChange: 'transform' }} />
+        <p style={{ color: '#6B5C52', fontSize: '14px' }}>Loading...</p>
+        <style>{'@keyframes spin { to { transform: rotate(360deg); } }'}</style>
+      </div>
+    }>
+      <TripPageInner />
+    </Suspense>
   );
 }

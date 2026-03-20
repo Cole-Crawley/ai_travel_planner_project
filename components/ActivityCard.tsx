@@ -92,7 +92,7 @@ export default function ActivityCard({
             <span style={{
               fontSize: '11px',
               fontWeight: 700,
-              color: '#E8573A',
+              color: '#BF4528',
               letterSpacing: '0.02em',
               fontVariantNumeric: 'tabular-nums',
             }}>
@@ -102,7 +102,7 @@ export default function ActivityCard({
             <span style={{
               fontSize: '10px',
               fontWeight: 700,
-              color: '#C8BFB8',
+              color: '#7A6B62',
               background: '#F5F0EB',
               width: '18px',
               height: '18px',
@@ -140,7 +140,7 @@ export default function ActivityCard({
                       background: cat.dot,
                       flexShrink: 0,
                     }} />
-                    <span style={{ fontSize: '10px', fontWeight: 600, color: '#A09890', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    <span style={{ fontSize: '10px', fontWeight: 600, color: '#7A6B62', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                       {cat.label}
                     </span>
                   </span>
@@ -163,7 +163,7 @@ export default function ActivityCard({
             {/* Description */}
             <p style={{
               fontSize: '12px',
-              color: '#8C7B6E',
+              color: '#6B5C52',
               lineHeight: 1.6,
               marginBottom: '10px',
               display: '-webkit-box',
@@ -264,7 +264,7 @@ function MetaChip({ icon, label }: { icon: string; label: string }) {
   return (
     <span style={{
       fontSize: '11px',
-      color: '#8C7B6E',
+      color: '#6B5C52',
       display: 'flex',
       alignItems: 'center',
       gap: '3px',

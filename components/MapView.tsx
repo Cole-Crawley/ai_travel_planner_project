@@ -8,12 +8,11 @@ import { Activity } from '@/types';
 interface MapViewProps {
   activities: Activity[];
   center: [number, number];
-  hoveredActivity?: Activity | null;     // sticky — only replaced when entering a new card
-  alternativeActivities?: Activity[];    // teal preview nodes shown while panel is open
-  previewedAlt?: Activity | null;        // which alt is being hovered in the alt list
+  hoveredActivity?: Activity | null;
+  alternativeActivities?: Activity[];
+  previewedAlt?: Activity | null;
 }
 
-/** MapLibre expects [lng, lat]. AI often returns [lat, lng]. Detect and fix. */
 function normalizeLngLat(coords: [number, number]): [number, number] | null {
   const [a, b] = coords;
   if (Math.abs(a) <= 180 && Math.abs(b) <= 90) return [a, b];
@@ -63,50 +62,107 @@ export default function MapView({
   alternativeActivities = [],
   previewedAlt,
 }: MapViewProps) {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map          = useRef<maplibregl.Map | null>(null);
-  const markerMap    = useRef<Map<string, MarkerEntry>>(new Map());
+  const mapContainer  = useRef<HTMLDivElement>(null);
+  const map           = useRef<maplibregl.Map | null>(null);
+  const markerMap     = useRef<Map<string, MarkerEntry>>(new Map());
+  // Store pending state so effects that fire before the map is ready
+  // can be replayed once it initialises
+  const pendingCenter = useRef<[number, number] | null>(null);
+  const mapReady      = useRef(false);
 
-  // ── Init map once ─────────────────────────────────────────────────────────
+  // ── Init map lazily via IntersectionObserver ───────────────────────────────
+  // The map only boots when the container enters the viewport.
+  // This prevents MapLibre (~1.8MB of JS) from blocking the main thread
+  // during the initial page load / itinerary render.
   useEffect(() => {
-    if (!mapContainer.current || map.current) return;
-    const safeCenter = normalizeLngLat(center) ?? [0, 0];
+    if (!mapContainer.current) return;
 
-    // Primary: MapTiler streets (requires API key). Fallback: free OpenStreetMap raster style.
-    const tilerKey = process.env.NEXT_PUBLIC_MAPTILER_KEY;
-    const style = tilerKey
-      ? `https://api.maptiler.com/maps/streets/style.json?key=${tilerKey}`
-      : 'https://demotiles.maplibre.org/style.json';
+    const container = mapContainer.current;
 
-    map.current = new maplibregl.Map({
-      container: mapContainer.current,
-      style,
-      center: safeCenter,
-      zoom: 12,
-    });
+    const initMap = () => {
+      if (map.current) return; // already initialised
 
-    map.current.on('error', (e) => {
-      // Style load failed (bad key, network) — swap to free fallback tiles
-      if (map.current && (e.error as { status?: number })?.status === 401) {
-        map.current.setStyle('https://demotiles.maplibre.org/style.json');
-      }
-    });
+      const safeCenter = normalizeLngLat(center) ?? [0, 0];
 
-    return () => { map.current?.remove(); map.current = null; };
+      const tilerKey = process.env.NEXT_PUBLIC_MAPTILER_KEY;
+      const style = tilerKey
+        ? `https://api.maptiler.com/maps/streets/style.json?key=${tilerKey}`
+        : 'https://demotiles.maplibre.org/style.json';
+
+      map.current = new maplibregl.Map({
+        container,
+        style,
+        center: safeCenter,
+        zoom: 12,
+      });
+
+      map.current.on('error', (e) => {
+        if (map.current && (e.error as { status?: number })?.status === 401) {
+          map.current.setStyle('https://demotiles.maplibre.org/style.json');
+        }
+      });
+
+      // Once the map style is loaded, mark it ready and apply any
+      // state (markers, center) that arrived before init completed
+      map.current.on('load', () => {
+        mapReady.current = true;
+
+        // Fly to the latest center if it changed while map was loading
+        if (pendingCenter.current) {
+          map.current!.flyTo({ center: pendingCenter.current, zoom: 12, duration: 800 });
+          pendingCenter.current = null;
+        }
+      });
+    };
+
+    // Use IntersectionObserver if available (all modern browsers)
+    // Fall back to immediate init for environments that don't support it
+    if (typeof IntersectionObserver === 'undefined') {
+      initMap();
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          initMap();
+          observer.disconnect(); // only need to fire once
+        }
+      },
+      {
+        // Start loading slightly before the map enters view
+        // so it's ready by the time the user sees it
+        rootMargin: '200px',
+        threshold: 0,
+      },
+    );
+
+    observer.observe(container);
+
+    return () => {
+      observer.disconnect();
+      map.current?.remove();
+      map.current = null;
+      mapReady.current = false;
+    };
   }, []);
 
-  // ── Re-centre when center prop updates (e.g. different destination loaded) ──
+  // ── Re-centre when center prop updates ────────────────────────────────────
   useEffect(() => {
-    if (!map.current) return;
     const safeCenter = normalizeLngLat(center);
     if (!safeCenter || (safeCenter[0] === 0 && safeCenter[1] === 0)) return;
-    map.current.flyTo({ center: safeCenter, zoom: 12, duration: 800 });
+
+    if (map.current && mapReady.current) {
+      map.current.flyTo({ center: safeCenter, zoom: 12, duration: 800 });
+    } else {
+      // Map not ready yet — store so we can apply it on load
+      pendingCenter.current = safeCenter;
+    }
   }, [center]);
 
-  // ── Rebuild markers when the activity list or alternatives change ──────────
-  // (This fires on: day filter change, swap committed, alt panel open/close)
+  // ── Rebuild markers when activity list or alternatives change ──────────────
   useEffect(() => {
-    if (!map.current) return;
+    if (!map.current || !mapReady.current) return;
 
     markerMap.current.forEach(({ marker }) => marker.remove());
     markerMap.current.clear();
@@ -124,7 +180,7 @@ export default function MapView({
         `<div style="padding:10px 12px;min-width:160px;">` +
         `<p style="font-size:13px;font-weight:600;margin:0 0 4px;color:#1C1917;">${activity.title}</p>` +
         `<p style="font-size:11px;color:${accentColor};margin:0;">📍 ${activity.location}</p>` +
-        (kind === 'alt' ? `<p style="font-size:10px;color:#8C7B6E;margin:4px 0 0;font-style:italic;">Alternative option</p>` : '') +
+        (kind === 'alt' ? `<p style="font-size:10px;color:#6B5C52;margin:4px 0 0;font-style:italic;">Alternative option</p>` : '') +
         `</div>`;
 
       const marker = new maplibregl.Marker({ element: el })
@@ -139,7 +195,7 @@ export default function MapView({
     alternativeActivities.forEach((a, i) => place(a, i, 'alt'));
   }, [activities, alternativeActivities]);
 
-  // ── Hover / preview: direct DOM mutation only — zero re-render ─────────────
+  // ── Hover / preview: direct DOM mutation — zero re-render ─────────────────
   useEffect(() => {
     markerMap.current.forEach(({ el, kind }, title) => {
       const active = hoveredActivity?.title === title || previewedAlt?.title === title;
@@ -149,7 +205,7 @@ export default function MapView({
     const flyTarget = previewedAlt ?? hoveredActivity;
     if (flyTarget) {
       const entry = markerMap.current.get(flyTarget.title);
-      if (entry && map.current) {
+      if (entry && map.current && mapReady.current) {
         map.current.flyTo({ center: entry.coords, zoom: 14, duration: 450, essential: true });
       }
     }
