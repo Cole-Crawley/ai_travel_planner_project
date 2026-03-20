@@ -124,24 +124,24 @@ public/                              # Static assets
 ---
 StoryBook (Testing components without the loading)
 Activites
+---
 <img width="1117" height="1120" alt="image" src="https://github.com/user-attachments/assets/8a437032-f3f0-4b09-bf25-f1851a77a43a" />
 <img width="1073" height="1027" alt="image" src="https://github.com/user-attachments/assets/15bce140-c729-4a9f-ad8b-9fb1f06beab3" />
 <img width="1092" height="747" alt="image" src="https://github.com/user-attachments/assets/8da44572-5aaa-4934-9e26-f08f3d84dcbf" />
 <img width="1087" height="1269" alt="image" src="https://github.com/user-attachments/assets/b5112f96-64b8-4762-a46f-35029a6cb0cf" />
 
+---
 Saved Trips
+---
 <img width="973" height="1170" alt="image" src="https://github.com/user-attachments/assets/1b57e281-3d7a-4a35-96e7-85da17130266" />
 <img width="968" height="1160" alt="image" src="https://github.com/user-attachments/assets/ac793ff4-e01b-4974-a4e6-34bb579a48b1" />
 <img width="977" height="1066" alt="image" src="https://github.com/user-attachments/assets/2decdd4c-deaa-4c0d-a389-2bf94ea51906" />
 <img width="975" height="1066" alt="image" src="https://github.com/user-attachments/assets/b8be1255-a8ca-4e1e-8087-7fcdf97b57c6" />
 
 ---
-
----
 Lighthouse Score
-<img width="528" height="1116" alt="image" src="https://github.com/user-attachments/assets/e042b3a9-c4ea-4119-9f1f-245d522028c4" />
-
 ---
+<img width="528" height="1116" alt="image" src="https://github.com/user-attachments/assets/e042b3a9-c4ea-4119-9f1f-245d522028c4" />
 
 The structured prompt writing method requires users to define real-world limitations, which must be applied throughout their interactive systems. The development of resilient AI pipelines enables systems to manage rate limits and truncation and malformed output without displaying errors to their users. The performance of map markers depends on the comparison between React state updates and direct DOM mutation. The route displays how mapping libraries use coordinate systems while demonstrating safe methods to standardize AI-created geographic information.
 
