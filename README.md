@@ -134,13 +134,12 @@ Saved Trips
 <img width="968" height="1160" alt="image" src="https://github.com/user-attachments/assets/ac793ff4-e01b-4974-a4e6-34bb579a48b1" />
 <img width="977" height="1066" alt="image" src="https://github.com/user-attachments/assets/2decdd4c-deaa-4c0d-a389-2bf94ea51906" />
 <img width="975" height="1066" alt="image" src="https://github.com/user-attachments/assets/b8be1255-a8ca-4e1e-8087-7fcdf97b57c6" />
+
 ---
 
 ---
 Lighthouse Score
 <img width="528" height="1116" alt="image" src="https://github.com/user-attachments/assets/e042b3a9-c4ea-4119-9f1f-245d522028c4" />
----
-
 
 ---
 
