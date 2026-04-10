@@ -1,9 +1,10 @@
 "use client"
 
-import { CSSProperties, useState, useEffect } from "react"
+import { CSSProperties, useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import Floating, { FloatingElement } from "@/components/ui/parallax-floating"
+
 
 // Spaced out images with absolute positioning - spread across all corners
 const floatingImages: {
@@ -136,6 +137,32 @@ export default function Home() {
     router.push(`/trip?destination=${encodeURIComponent(destination)}`)
   }
 
+  // Memoize the floating images component to prevent re-renders
+  const FloatingImagesLayer = useMemo(() => (
+    <Floating sensitivity={0.2} className="h-full w-full" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 5 }}>
+      {floatingImages.map((img, i) => (
+        <FloatingElement 
+          key={i} 
+          depth={img.depth} 
+          className="absolute"
+          style={img.position}
+        >
+          <img
+            src={img.url}
+            alt={img.alt}
+            style={{
+              ...img.img,
+              objectFit: "cover",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+              cursor: "pointer",
+              display: "block",
+            }}
+          />
+        </FloatingElement>
+      ))}
+    </Floating>
+  ), []) // Empty dependency array means it never re-renders
+
   return (
     <main style={{ height: "100vh", color: "#1C1917", position: "relative", overflow: "hidden", background: "transparent" }}>
       {/* Navbar */}
@@ -161,35 +188,10 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* PARALLAX FLOATING IMAGES LAYER */}
-      <Floating sensitivity={-0.4} className="h-full w-full" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 5 }}>
-        {floatingImages.map((img, i) => (
-          <FloatingElement 
-            key={i} 
-            depth={img.depth} 
-            className="absolute"
-            style={img.position}
-          >
-            <motion.img
-              src={img.url}
-              alt={img.alt}
-              style={{
-                ...img.img,
-                objectFit: "cover",
-                boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
-                cursor: "pointer",
-                display: "block",
-              }}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: img.delay, duration: 0.8, ease: "easeOut" }}
-              whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-            />
-          </FloatingElement>
-        ))}
-      </Floating>
+      {/* PARALLAX FLOATING IMAGES LAYER - Memoized */}
+      {FloatingImagesLayer}
 
-      {/* MAIN CONTENT - REMOVED pointerEvents: "none" from parent */}
+      {/* MAIN CONTENT */}
       <div
         style={{
           position: "relative",
@@ -201,7 +203,7 @@ export default function Home() {
           alignItems: "center",
         }}
       >
-        {/* HERO CONTENT - All elements are clickable now */}
+        {/* Rest of your content remains the same */}
         <div
           className="flex flex-col items-center px-6 text-center relative"
           style={{ maxWidth: "720px", width: "100%" }}
@@ -349,7 +351,7 @@ export default function Home() {
             ))}
           </motion.div>
 
-          {/* HOW IT WORKS SECTION - Integrated without border */}
+          {/* HOW IT WORKS SECTION */}
           <div style={{ maxWidth: "700px", marginTop: "20px", width: "100%" }}>
             <p
               style={{
