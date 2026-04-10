@@ -1,6 +1,6 @@
 # ✈️ AI Travel Planner
 
-**[→ Live Demo](https://aitravelplanner-snowy.vercel.app)**
+**[→ Live Demo](https://aitravelplanner-7h9b6v395-cole-crawleys-projects.vercel.app)**
 
 The trip planning application employs AI technology to create customized travel schedules which show geographical connections between different points of interest and display these schedules through an interactive mapping system that enables users to choose specific activities during their trip. 
 
