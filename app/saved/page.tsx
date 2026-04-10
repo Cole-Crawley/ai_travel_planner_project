@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { SavedTrip } from '@/types';
+import { Button } from '@/components/ui/button';
 
 const CATEGORY_DOTS: Record<string, string> = {
   Culture:    '#6366F1',
@@ -15,7 +16,6 @@ const CATEGORY_DOTS: Record<string, string> = {
 };
 
 function getTripAccentColor(destination: string): string {
-  // Deterministic colour from destination name — gives each card a distinct tint
   const palette = ['#E8573A', '#0D9488', '#7C5CBF', '#C2853B', '#2563EB', '#B45309'];
   let hash = 0;
   for (let i = 0; i < destination.length; i++) hash = destination.charCodeAt(i) + ((hash << 5) - hash);
@@ -25,10 +25,17 @@ function getTripAccentColor(destination: string): string {
 export default function SavedPage() {
   const [trips, setTrips] = useState<SavedTrip[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    setTrips(JSON.parse(localStorage.getItem('savedTrips') || '[]'));
+    const loadTrips = () => {
+      if (typeof window === 'undefined') return;
+      const savedTrips = JSON.parse(localStorage.getItem('savedTrips') || '[]');
+      setTrips(savedTrips);
+      setIsLoading(false);
+    };
+    
+    loadTrips();
   }, []);
 
   const deleteTrip = (id: string) => {
@@ -41,9 +48,24 @@ export default function SavedPage() {
     }, 350);
   };
 
-  return (
-    <main style={{ minHeight: '100vh', background: '#F5F0E8', color: '#1C1917' }}>
+  if (isLoading) {
+    return (
+      <main style={{ minHeight: '100vh', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{
+          width: '32px',
+          height: '32px',
+          borderRadius: '50%',
+          border: '2.5px solid rgba(232,87,58,0.2)',
+          borderTopColor: '#E8573A',
+          animation: 'spin 0.75s linear infinite',
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </main>
+    );
+  }
 
+  return (
+    <main style={{ minHeight: '100vh', background: 'transparent', color: '#1C1917' }}>
       {/* Header */}
       <div style={{ padding: '32px 48px 0', maxWidth: '900px', margin: '0 auto' }}>
         <Link href="/" style={{ fontSize: '13px', color: '#BF4528', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '40px', opacity: 0.9 }}>
@@ -60,7 +82,7 @@ export default function SavedPage() {
             </h1>
           </div>
           {trips.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '100px', padding: '10px 20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '100px', padding: '10px 20px' }}>
               <span style={{ fontSize: '22px', fontWeight: 900, color: '#BF4528', fontFamily: 'var(--font-playfair), serif', lineHeight: 1 }}>{trips.length}</span>
               <span style={{ fontSize: '13px', color: '#6B5C52' }}>{trips.length === 1 ? 'itinerary saved' : 'itineraries saved'}</span>
             </div>
@@ -77,7 +99,6 @@ export default function SavedPage() {
             transition={{ duration: 0.5 }}
             style={{ textAlign: 'center', padding: '100px 0 80px' }}
           >
-            {/* Decorative compass */}
             <div style={{ fontSize: '48px', marginBottom: '24px', opacity: 0.5 }}>🧭</div>
             <p style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '24px', fontWeight: 700, marginBottom: '10px', color: '#1C1917' }}>
               No trips yet
@@ -116,11 +137,8 @@ export default function SavedPage() {
                       position: 'relative',
                     }}
                   >
-                    {/* Accent stripe */}
                     <div style={{ height: '4px', background: accent, width: '100%' }} />
-
                     <div style={{ padding: '28px 32px 24px' }}>
-
                       {/* Top row */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                         <div>
@@ -144,43 +162,28 @@ export default function SavedPage() {
                           </div>
                         </div>
 
-                        <button
+                        <Button
                           onClick={() => deleteTrip(trip.id)}
+                          variant="outline"
+                          size="sm"
                           style={{
-                            background: 'none',
-                            border: '1px solid rgba(0,0,0,0.08)',
-                            borderRadius: '100px',
+                            borderColor: 'rgba(0,0,0,0.08)',
                             color: '#6B5C52',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            padding: '6px 14px',
-                            transition: 'all 0.15s',
                             flexShrink: 0,
                           }}
-                          onMouseEnter={e => {
-                            (e.target as HTMLElement).style.background = '#FFF0EE';
-                            (e.target as HTMLElement).style.color = '#E8573A';
-                            (e.target as HTMLElement).style.borderColor = 'rgba(232,87,58,0.2)';
-                          }}
-                          onMouseLeave={e => {
-                            (e.target as HTMLElement).style.background = 'none';
-                            (e.target as HTMLElement).style.color = '#A09080';
-                            (e.target as HTMLElement).style.borderColor = 'rgba(0,0,0,0.08)';
-                          }}
+                          className="hover:bg-red-50 hover:text-[#E8573A] hover:border-red-200"
                         >
                           Remove
-                        </button>
+                        </Button>
                       </div>
 
-                      {/* Day timeline */}
+                      {/* Day timeline - keep the same */}
                       <div style={{ marginBottom: '24px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
                           {trip.itinerary.days.slice(0, 4).map((day, di) => {
                             const isLast = di === Math.min(trip.itinerary.days.length, 4) - 1 && trip.itinerary.days.length <= 4;
                             return (
                               <div key={day.day} style={{ display: 'flex', gap: '0', position: 'relative' }}>
-
-                                {/* Timeline spine */}
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: '16px', flexShrink: 0 }}>
                                   <div style={{
                                     width: '8px', height: '8px',
@@ -194,8 +197,6 @@ export default function SavedPage() {
                                     <div style={{ width: '1px', flex: 1, background: 'rgba(0,0,0,0.07)', minHeight: '16px' }} />
                                   )}
                                 </div>
-
-                                {/* Content */}
                                 <div style={{ paddingBottom: isLast ? 0 : '10px', paddingTop: '10px', flex: 1, minWidth: 0 }}>
                                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '4px' }}>
                                     <span style={{ fontSize: '11px', fontWeight: 700, color: accent, letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>
