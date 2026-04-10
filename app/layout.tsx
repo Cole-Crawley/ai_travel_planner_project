@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Playfair_Display, DM_Sans } from 'next/font/google';
+import { AuroraBackground } from '@/components/ui/aurora-background';
 import './globals.css';
 
 const playfair = Playfair_Display({
@@ -7,7 +8,7 @@ const playfair = Playfair_Display({
   variable: '--font-playfair',
   weight: ['400', '700', '900'],
   style: ['normal', 'italic'],
-  display: 'swap',   // show fallback font immediately, swap when loaded — improves FCP
+  display: 'swap',
   preload: true,
 });
 
@@ -20,11 +21,11 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'WanderAI — AI Travel Planner',
+  title: 'BaconAI — AI Travel Planner',
   description: 'Generate personalised, geographically coherent travel itineraries powered by AI. Plan your trip, explore on a map, and swap activities in real time.',
   keywords: ['travel planner', 'AI itinerary', 'trip planning', 'travel app'],
   openGraph: {
-    title: 'WanderAI — AI Travel Planner',
+    title: 'BaconAI — AI Travel Planner',
     description: 'Generate personalised travel itineraries powered by AI.',
     type: 'website',
   },
@@ -42,8 +43,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${playfair.variable} ${dmSans.variable}`}>
-      <body>{children}</body>
+    <html lang="en" className={`${playfair.variable} ${dmSans.variable}`} suppressHydrationWarning>
+      <body suppressHydrationWarning>
+        <AuroraBackground showRadialGradient={true}>
+          {children}
+        </AuroraBackground>
+      </body>
     </html>
   );
 }

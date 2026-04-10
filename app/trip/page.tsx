@@ -198,7 +198,7 @@ function TripPageInner() {
 
   // ── Loading / error states ─────────────────────────────────────────────────
   if (loading) return (
-    <div style={{ minHeight: '100vh', background: '#F5F0E8', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
       <div style={{
         width: '32px', height: '32px', borderRadius: '50%',
         border: '2.5px solid rgba(232,87,58,0.2)',
@@ -212,7 +212,7 @@ function TripPageInner() {
   );
 
   if (error) return (
-    <div style={{ minHeight: '100vh', background: '#F5F0E8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <p style={{ color: '#BF4528', fontSize: '14px' }}>{error}</p>
     </div>
   );
@@ -227,7 +227,7 @@ function TripPageInner() {
   const visibleAlts                 = selectedActivityIndex ? activityAlts : [];
 
   return (
-    <main style={{ minHeight: '100vh', background: '#F5F0E8', color: '#1C1917' }}>
+    <main style={{ minHeight: '100vh', color: '#1C1917', background: 'transparent' }}>
 
       {/* Save toast */}
       <AnimatePresence>
@@ -243,8 +243,17 @@ function TripPageInner() {
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <div style={{ padding: '20px 40px', borderBottom: '1px solid rgba(0,0,0,0.08)', background: '#F5F0E8', position: 'sticky', top: 0, zIndex: 10 }}>
+      {/* Header - Semi-transparent with backdrop blur */}
+      <div style={{ 
+        padding: '20px 40px', 
+        borderBottom: '1px solid rgba(0,0,0,0.08)', 
+        background: 'rgba(245, 240, 232, 0.8)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        position: 'sticky', 
+        top: 0, 
+        zIndex: 10 
+      }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
           <Link href="/" style={{ fontSize: '13px', color: '#BF4528', textDecoration: 'none' }}>← Back</Link>
           <div style={{ display: 'flex', gap: '10px' }}>
@@ -416,7 +425,14 @@ function TripPageInner() {
 
         {/* Right: map */}
         <div style={{ width: '50%', padding: '16px 24px 16px 8px' }}>
-          <div style={{ height: '100%', borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+          <div style={{ 
+            height: '100%', 
+            borderRadius: '24px', 
+            overflow: 'hidden', 
+            border: '1px solid rgba(0,0,0,0.08)', 
+            boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+            background: 'white'
+          }}>
             <MapView
               activities={displayedActivities}
               center={mapCenter}
@@ -434,7 +450,7 @@ function TripPageInner() {
 export default function TripPage() {
   return (
     <Suspense fallback={
-      <div style={{ minHeight: '100vh', background: '#F5F0E8', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+      <div style={{ minHeight: '100vh', background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
         <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2.5px solid rgba(232,87,58,0.2)', borderTopColor: '#E8573A', animation: 'spin 0.75s linear infinite', willChange: 'transform' }} />
         <p style={{ color: '#6B5C52', fontSize: '14px' }}>Loading...</p>
         <style>{'@keyframes spin { to { transform: rotate(360deg); } }'}</style>
