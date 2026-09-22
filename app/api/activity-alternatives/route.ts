@@ -1,22 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Groq from 'groq-sdk';
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
-const MODEL_FALLBACK_CHAIN = [
-  'llama-3.1-8b-instant',
-  'llama3-8b-8192',
-  'gemma2-9b-it',
-];
-
-function isRateLimitError(err: unknown): boolean {
-  return (
-    typeof err === 'object' &&
-    err !== null &&
-    'status' in err &&
-    (err as { status: number }).status === 429
-  );
-}
+import { generateJSON, AIRateLimitError } from '@/lib/claude';
 
 export async function POST(req: NextRequest) {
   const { destination, currentActivity, currentCoordinates, timeSlot, dayActivities, theme } = await req.json();
@@ -72,50 +55,17 @@ DAY COHERENCE:
 
 Suggest 3 alternative activities they could realistically do instead. Each must be near the same area of the city, fit the same time slot, and make sense given what else is planned that day.`;
 
-  for (const model of MODEL_FALLBACK_CHAIN) {
-    try {
-      const completion = await groq.chat.completions.create({
-        model,
-        max_tokens: 3000,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user',   content: userPrompt },
-        ],
-      });
-
-      const text         = completion.choices[0].message.content || '';
-      const clean        = text.replace(/```json|```/g, '').trim();
-      const finishReason = completion.choices[0].finish_reason;
-
-      if (finishReason === 'length') {
-        console.warn(`[activity-alternatives] model ${model} hit token limit, trying next…`);
-        continue;
-      }
-
-      let data: unknown;
-      try {
-        data = JSON.parse(clean);
-      } catch (parseErr) {
-        console.warn(`[activity-alternatives] model ${model} returned unparseable JSON, trying next…`, parseErr);
-        continue;
-      }
-
-      return NextResponse.json(data);
-
-    } catch (err) {
-      if (!isRateLimitError(err)) {
-        console.error(`[activity-alternatives] model ${model} failed:`, err);
-        continue;
-      }
-      console.warn(`[activity-alternatives] model ${model} rate-limited, trying next…`);
-    }
+  try {
+    const data = await generateJSON(systemPrompt, userPrompt, 4000);
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error('[activity-alternatives] generation failed:', err);
+    return NextResponse.json(
+      {
+        error: 'rate_limit',
+        message: 'Unable to load alternatives right now. Please try again in a few minutes.',
+      },
+      { status: err instanceof AIRateLimitError ? 429 : 500 },
+    );
   }
-
-  return NextResponse.json(
-    {
-      error: 'rate_limit',
-      message: 'Unable to load alternatives right now. Please try again in a few minutes.',
-    },
-    { status: 429 },
-  );
 }

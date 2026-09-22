@@ -1,34 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Groq from 'groq-sdk';
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
-// Fallback chain: start with the cheapest/fastest, escalate only if needed.
-// llama-3.1-8b-instant uses ~4x fewer tokens than llama-3.3-70b-versatile.
-const MODEL_FALLBACK_CHAIN = [
-  'llama-3.1-8b-instant',
-  'llama3-8b-8192',
-  'gemma2-9b-it',
-];
-
-function isRateLimitError(err: unknown): boolean {
-  return (
-    typeof err === 'object' &&
-    err !== null &&
-    'status' in err &&
-    (err as { status: number }).status === 429
-  );
-}
-
-function getRetryAfterSeconds(err: unknown): number | null {
-  try {
-    const headers = (err as { headers?: Record<string, string> }).headers;
-    const retryAfter = headers?.['retry-after'];
-    return retryAfter ? parseInt(retryAfter, 10) : null;
-  } catch {
-    return null;
-  }
-}
+import { generateJSON, AIRateLimitError } from '@/lib/claude';
 
 export async function POST(req: NextRequest) {
   const { destination, days = 5, preferences = '' } = await req.json();
@@ -87,61 +58,25 @@ ACTIVITY VARIETY & SENSE:
 User preferences: ${preferences}. Tailor the activities to match.` : '';
   const userPrompt = `Plan a ${tripDays} day trip to ${destination} with 3 activities per day. Make sure each day is geographically coherent — activities should be in the same area of the city so the itinerary is actually walkable and practical. Each day should feel like a real, well-paced day out, not a list of disconnected highlights.${prefsClause}`;
 
-  // Try each model in the fallback chain
-  for (const model of MODEL_FALLBACK_CHAIN) {
-    try {
-      const completion = await groq.chat.completions.create({
-        model,
-        // Scale tokens with trip length. 14 days needs ~2.5x the tokens of 5 days.
-        // Cap at 8000 to stay within Groq's per-request limits.
-        max_tokens: Math.min(8000, 3000 + tripDays * 400),
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user',   content: userPrompt },
-        ],
-      });
-
-      const text         = completion.choices[0].message.content || '';
-      const clean        = text.replace(/```json|```/g, '').trim();
-      const finishReason = completion.choices[0].finish_reason;
-
-      // If the model was cut off mid-output, fall through to the next model
-      if (finishReason === 'length') {
-        console.warn(`[itinerary] model ${model} hit token limit (finish_reason=length), trying next…`);
-        continue;
-      }
-
-      let data: unknown;
-      try {
-        data = JSON.parse(clean);
-      } catch (parseErr) {
-        // Truncated or malformed JSON — try next model
-        console.warn(`[itinerary] model ${model} returned unparseable JSON, trying next…`, parseErr);
-        continue;
-      }
-
-      return NextResponse.json(data);
-
-    } catch (err) {
-      if (!isRateLimitError(err)) {
-        // Unexpected API error — still try next model rather than giving up
-        console.error(`[itinerary] model ${model} failed with unexpected error:`, err);
-        continue;
-      }
-      // 429 — try the next model in the chain
-      console.warn(`[itinerary] model ${model} rate-limited, trying next fallback…`);
+  try {
+    // Scale tokens with trip length. 14 days needs ~2.5x the tokens of 5 days.
+    const data = await generateJSON(systemPrompt, userPrompt, Math.min(16000, 4000 + tripDays * 800));
+    return NextResponse.json(data);
+  } catch (err) {
+    if (err instanceof AIRateLimitError) {
+      return NextResponse.json(
+        {
+          error: 'rate_limit',
+          message: "We've hit the AI usage limit for now. Please try again in a few minutes.",
+          retryAfter: 300,
+        },
+        { status: 429 },
+      );
     }
+    console.error('[itinerary] generation failed:', err);
+    return NextResponse.json(
+      { error: 'failed', message: "Couldn't plan this trip right now. Please try again." },
+      { status: 500 },
+    );
   }
-
-  // All models exhausted
-  const retryAfter = getRetryAfterSeconds(null) ?? 300;
-  const minutes    = Math.ceil(retryAfter / 60);
-  return NextResponse.json(
-    {
-      error: 'rate_limit',
-      message: `We've hit the AI usage limit for now. Please try again in about ${minutes} minute${minutes === 1 ? '' : 's'}.`,
-      retryAfter,
-    },
-    { status: 429 },
-  );
 }
