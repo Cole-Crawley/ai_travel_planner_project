@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit } from '@/lib/rateLimit';
 import { generateJSON, AIRateLimitError } from '@/lib/claude';
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(req, 'itinerary', 10);
+  if (limited) return limited;
+
   const { destination, days = 5, preferences = '' } = await req.json();
   // Cap at 14 days to avoid token exhaustion
   const tripDays = Math.min(Math.max(1, Number(days)), 14);

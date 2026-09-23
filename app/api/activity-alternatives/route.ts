@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit } from '@/lib/rateLimit';
 import { generateJSON, AIRateLimitError } from '@/lib/claude';
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(req, 'activity-alternatives', 30);
+  if (limited) return limited;
+
   const { destination, currentActivity, currentCoordinates, timeSlot, dayActivities, theme } = await req.json();
 
   const scheduleContext = dayActivities && dayActivities.length > 0

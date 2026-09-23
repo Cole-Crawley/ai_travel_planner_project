@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit } from '@/lib/rateLimit';
 import { generateJSON } from '@/lib/claude';
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(req, 'alternatives', 30);
+  if (limited) return limited;
+
   const { destination } = await req.json();
 
   const systemPrompt = `You are a travel expert. Return ONLY valid JSON, no markdown, no explanation. Format:
