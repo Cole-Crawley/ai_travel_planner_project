@@ -33,3 +33,6 @@
     border-color: rgba(232, 87, 58, 0.25);
   }
 }
+/* Landing page photos only show when the side gutters are wide enough to hold them */
+.hero-photos { display: none; }
+@media (min-width: 1280px) { .hero-photos { display: block; } }

@@ -6,7 +6,8 @@ import { motion } from "framer-motion"
 import Floating, { FloatingElement } from "@/components/ui/parallax-floating"
 
 
-// Spaced out images with absolute positioning - spread across all corners
+// Photos live in the side gutters only, never behind the centre column.
+// Sizes are capped so they fit the gutter at 1280px, the smallest width they show at.
 const floatingImages: {
   url: string
   alt: string
@@ -16,60 +17,52 @@ const floatingImages: {
   delay: number
 }[] = [
   {
-    url: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&auto=format&fit=crop",
-    alt: "Tokyo mall",
-    position: { top: "12%", right: "17%" },
-    img: { width: 350, height: 250, transform: "rotate(4deg)", borderRadius: "24px" },
-    depth: 1.5,
-    delay: 0.3,
-  },
-  {
-    url: "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=600&auto=format&fit=crop",
-    alt: "Santorini",
-    position: { bottom: "8%", left: "5%" },
-    img: { width: 190, height: 250, transform: "rotate(-6deg)", borderRadius: "20px" },
-    depth: 0.8,
-    delay: 0.9,
-  },
-  {
     url: "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=600&auto=format&fit=crop",
     alt: "Venice canal",
-    position: { top: "12%", left: "25%" },
-    img: { width: 300, height: 380, transform: "rotate(-7deg)", borderRadius: "20px" },
+    position: { top: "13%", left: "3%" },
+    img: { width: 190, height: 240, transform: "rotate(-7deg)", borderRadius: "20px" },
     depth: 1.0,
     delay: 0.4,
   },
   {
-    url: "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=1000&auto=format&fit=crop",
-    alt: "Japan Night Life",
-    position: { bottom: "10%", right: "8%" },
-    img: { width: 380, height: 240, transform: "rotate(6deg)", borderRadius: "20px" },
-    depth: 2.0,
-    delay: 0.7,
-  },
-  {
     url: "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=600&auto=format&fit=crop",
     alt: "Italian countryside",
-    position: { top: "35%", left: "7%" },
-    img: { width: 270, height: 250, transform: "rotate(-10deg)", borderRadius: "22px" },
+    position: { top: "45%", left: "4.5%" },
+    img: { width: 180, height: 155, transform: "rotate(-4deg)", borderRadius: "22px" },
     depth: 1.2,
     delay: 0.6,
   },
   {
+    url: "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=600&auto=format&fit=crop",
+    alt: "Santorini",
+    position: { bottom: "7%", left: "2.5%" },
+    img: { width: 170, height: 220, transform: "rotate(5deg)", borderRadius: "20px" },
+    depth: 0.8,
+    delay: 0.9,
+  },
+  {
+    url: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&auto=format&fit=crop",
+    alt: "Tokyo mall",
+    position: { top: "12%", right: "3%" },
+    img: { width: 205, height: 148, transform: "rotate(4deg)", borderRadius: "24px" },
+    depth: 1.5,
+    delay: 0.3,
+  },
+  {
     url: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=500&auto=format&fit=crop",
     alt: "Bali temple",
-    position: { top: "40%", right: "8%" },
-    img: { width: 180, height: 290, transform: "rotate(8deg)", borderRadius: "18px" },
+    position: { top: "40%", right: "5.5%" },
+    img: { width: 160, height: 230, transform: "rotate(8deg)", borderRadius: "18px" },
     depth: 1.8,
     delay: 0.8,
   },
   {
-    url: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=700&auto=format&fit=crop",
-    alt: "Paris street",
-    position: { bottom: "25%", left: "20%" },
-    img: { width: 300, height: 190, transform: "rotate(3deg)", borderRadius: "20px" },
-    depth: 0.8,
-    delay: 0.9,
+    url: "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=1000&auto=format&fit=crop",
+    alt: "Japan night life",
+    position: { bottom: "8%", right: "3%" },
+    img: { width: 220, height: 150, transform: "rotate(-5deg)", borderRadius: "20px" },
+    depth: 2.0,
+    delay: 0.7,
   },
 ]
 
@@ -139,7 +132,7 @@ export default function Home() {
 
   // Memoize the floating images component to prevent re-renders
   const FloatingImagesLayer = useMemo(() => (
-    <Floating sensitivity={0.2} className="h-full w-full" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 5 }}>
+    <Floating sensitivity={0.2} className="hero-photos h-full w-full" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 5 }}>
       {floatingImages.map((img, i) => (
         <FloatingElement 
           key={i} 
@@ -208,6 +201,17 @@ export default function Home() {
           className="flex flex-col items-center px-6 text-center relative"
           style={{ maxWidth: "720px", width: "100%" }}
         >
+          {/* Soft cream glow keeps the copy readable if a photo drifts close */}
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: "-8% -12%",
+              zIndex: -1,
+              pointerEvents: "none",
+              background: "radial-gradient(closest-side, rgba(245,240,232,0.9), rgba(245,240,232,0))",
+            }}
+          />
           {/* Eyebrow badge */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
