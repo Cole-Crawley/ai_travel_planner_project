@@ -137,10 +137,4 @@ Lighthouse:
 
 <img width="528" height="1116" alt="Lighthouse scores" src="https://github.com/user-attachments/assets/e042b3a9-c4ea-4119-9f1f-245d522028c4" />
 
----
-
-## A note on how it was built
-
-The build was heavily AI-assisted, and I'm not claiming otherwise. What was mine was the direction: what the product should feel like, what was wrong with each version, and what to change next.
-
 *Made by [Cole Crawley](https://colecrawley.vercel.app).*
