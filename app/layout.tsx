@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Playfair_Display, DM_Sans } from 'next/font/google';
 import { AuroraBackground } from '@/components/ui/aurora-background';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 
 const playfair = Playfair_Display({
@@ -48,6 +49,7 @@ export default function RootLayout({
         <AuroraBackground showRadialGradient={true}>
           {children}
         </AuroraBackground>
+        <Analytics />
       </body>
     </html>
   );
