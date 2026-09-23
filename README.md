@@ -74,8 +74,8 @@ Maps moved from Mapbox to MapTiler for its free tier. The AI started on OpenAI, 
 ## Running it locally
 
 ```bash
-git clone https://github.com/Cole-Crawley/ai_travel_planner_project.git
-cd ai_travel_planner_project
+git clone https://github.com/Cole-Crawley/baconai.git
+cd baconai
 npm install
 ```
 
