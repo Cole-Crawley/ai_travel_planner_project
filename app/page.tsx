@@ -212,28 +212,6 @@ export default function Home() {
               background: "radial-gradient(closest-side, rgba(245,240,232,0.9), rgba(245,240,232,0))",
             }}
           />
-          {/* Eyebrow badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              background: "rgba(232,87,58,0.08)",
-              border: "1px solid rgba(232,87,58,0.25)",
-              borderRadius: "100px",
-              padding: "5px 14px 5px 10px",
-              marginBottom: "24px",
-            }}
-          >
-            <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#E8573A", display: "inline-block" }} />
-            <span style={{ fontSize: "12px", fontWeight: 500, color: "#E8573A", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-              AI Travel Planner
-            </span>
-          </motion.div>
-
           {/* Headline */}
           <motion.h1
             animate={{ opacity: 1, y: 0 }}
