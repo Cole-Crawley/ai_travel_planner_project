@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/rateLimit';
-import { generateJSON, AIRateLimitError } from '@/lib/claude';
+import { generateJSON, AIRateLimitError, AIDemoLimitError, DEMO_LIMIT_MESSAGE } from '@/lib/claude';
 
 export async function POST(req: NextRequest) {
   const limited = rateLimit(req, 'itinerary', 10);
@@ -67,6 +67,9 @@ User preferences: ${preferences}. Tailor the activities to match.` : '';
     const data = await generateJSON(systemPrompt, userPrompt, Math.min(16000, 4000 + tripDays * 800));
     return NextResponse.json(data);
   } catch (err) {
+    if (err instanceof AIDemoLimitError) {
+      return NextResponse.json({ error: 'demo_limit', message: DEMO_LIMIT_MESSAGE }, { status: 503 });
+    }
     if (err instanceof AIRateLimitError) {
       return NextResponse.json(
         {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/rateLimit';
-import { generateJSON, AIRateLimitError } from '@/lib/claude';
+import { generateJSON, AIRateLimitError, AIDemoLimitError, DEMO_LIMIT_MESSAGE } from '@/lib/claude';
 
 export async function POST(req: NextRequest) {
   const limited = rateLimit(req, 'activity-alternatives', 30);
@@ -63,6 +63,9 @@ Suggest 3 alternative activities they could realistically do instead. Each must 
     const data = await generateJSON(systemPrompt, userPrompt, 4000);
     return NextResponse.json(data);
   } catch (err) {
+    if (err instanceof AIDemoLimitError) {
+      return NextResponse.json({ error: 'demo_limit', message: DEMO_LIMIT_MESSAGE }, { status: 503 });
+    }
     console.error('[activity-alternatives] generation failed:', err);
     return NextResponse.json(
       {
