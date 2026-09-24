@@ -137,4 +137,4 @@ Lighthouse:
 
 <img width="528" height="1116" alt="Lighthouse scores" src="https://github.com/user-attachments/assets/e042b3a9-c4ea-4119-9f1f-245d522028c4" />
 
-*Made by [Cole Crawley](https://colecrawley.vercel.app).*
+*Made by [Cole Crawley](https://colecrawley.com).*
